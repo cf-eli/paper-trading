@@ -14,7 +14,7 @@ def getData():
             data = json.load(f)
         return data
     except FileNotFoundError:
-        data = {'no': 'test', 'yes': 'test2'}
+        data = {}
     return data
 class accountData():
     def __init__ (self, name, balance, stock = ''):
@@ -42,7 +42,7 @@ def checkHistory():
 
 def loadAccount(): #load user account or create new accounts
     def accountName(data, name):
-        for accName, data in data.items():
+        for accName in data.items():
             if accName == name:
                 return accountData(name, data['Money'], data['Stock'])
         data[name] = {}
@@ -57,7 +57,7 @@ def loadAccount(): #load user account or create new accounts
 
     #start here    
     data = getData()
-    if data:
+    if data: #if data not empty
         print("Current lists of accounts: ")
         for name2 in data:
             print(f"{name2} ") #finish this, use "sep" or "end"?
