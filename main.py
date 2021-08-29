@@ -12,16 +12,25 @@ def getData():
     try:
         with open("data.json", "r") as f:
             data = json.load(f)
-        return data.items()
+        return data
     except FileNotFoundError:
         data = {'no': 'test', 'yes': 'test2'}
     return data
 class accountData():
-    def __init__ (self, name, info):
+    def __init__ (self, name, balance, stock = ''):
         self.name = name
-        self.info = info
-def checkPrice():
-    return 1
+        self.bal = balance
+        self.stock = stock
+
+def dumpData(data):
+   with open("data.json", "w") as f:
+      json.dump(data, f, indent=4)
+def checkPrice(): #show price for current ticker
+    ticker = input("Enter the ticker you want to check to the current price for: ")
+    ticInfo = yf.Ticker(ticker)
+    curValue = ticInfo.info["currentPrice"]
+    print(f"The current price of {ticker.capitalize} is {curValue}\n")
+
 def buyStock():
     return 1
 def checkStock():
@@ -33,33 +42,41 @@ def checkHistory():
 
 def loadAccount(): #load user account or create new accounts
     def accountName(data, name):
-        print(data)
-        for k, v in data.items():
-            if k == name:
-                return accountData(k, v)
+        for accName, data in data.items():
+            if accName == name:
+                return accountData(name, data['Money'], data['Stock'])
         data[name] = {}
-        return accountData(name, data)
-        #balance = input("How much cash would you like for the account to start with?") #finish this
+        while(True):
+            try:
+                balance = int(input("How much money would you like to start this account with: "))
+                data[name]['Money'] = balance
+                break
+            except ValueError:
+                print("Please enter a number.")
+        return accountData(name, data[name]['Money'])
+
+    #start here    
     data = getData()
     if data:
         print("Current lists of accounts: ")
         for name2 in data:
-            print(f"{name2} ")
+            print(f"{name2} ") #finish this, use "sep" or "end"?
         name = input("Enter your account name to log into your account or enter an unique name to create a new account: ")
         acc = accountName(data, name)
     else:
         name = input("You currently have no accounts. Enter an account name: ")
         acc = accountName(data, name)
     print(f"Current account is {acc.name}")
-    #write code that display list of account here
+    dumpData(data)
+    return acc
 
 def exit(): #quit program
     return 1
 
 def menu(): #ui 
-    loadAccount()
-    "Enter a number that correspond with what you wish to do."
-    commandList = [["Find more information about a ticker", checkPrice], ["Buy some stock", buyStock], ["Check your current stocks", checkStock],
+    account = loadAccount()
+    print("Enter a number that correspond with what you wish to do.")
+    commandList = [["Check a ticker current price", checkPrice], ["Buy some stock", buyStock], ["Check your current stocks", checkStock],
                 ["Sell stock", sellStock],
                 ["Check account history", checkHistory],
                 ["Start a new or load an account", loadAccount], ["Exit program", exit]]             
