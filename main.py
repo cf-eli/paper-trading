@@ -1,5 +1,6 @@
 import yfinance as yf
 import json
+import pandas as pd
 
 #msft = yf.Ticker("MSFT")
 # for key, value in msft.info.items():
@@ -16,44 +17,83 @@ def getData():
     except FileNotFoundError:
         data = {}
     return data
-class accountData():
-    def __init__ (self, name, balance, stock = ''):
-        self.name = name
-        self.bal = balance
-        self.stock = stock
+    
+# class accountData():
+#     def __init__ (self, name):
+#         self.name = name
 
-def dumpData(data):
-   with open("data.json", "w") as f:
-      json.dump(data, f, indent=4)
-def checkPrice(): #show price for current ticker
-    ticker = input("Enter the ticker you want to check to the current price for: ")
-    ticInfo = yf.Ticker(ticker)
-    curValue = ticInfo.info["currentPrice"]
-    print(f"The current price of {ticker.capitalize} is {curValue}\n")
+def buyStock(account):
+    data = getData()
+    cash = data[account]['Money']
+    print(f'Cash on hand: {cash}')
+    while(True):
+        try:
+            ticker = input("Enter the ticker of the stock you'd like to buy: ")
+            ticker = ticker.upper()
+            tickerDict = yf.Ticker(ticker)
+            tickPrice = tickerDict.info["currentPrice"]
+        except KeyError:
+            print("This ticker is not recognizable.")
+        else: break
+    amt = int(input(f"How many {ticker} stocks would you like to buy: "))
 
-def buyStock():
-    return 1
-def checkStock():
-    return 1
+    balance = data[account]['Money']
+    if(tickPrice*amt) > balance:
+        print(f"Your balance is too low. Ticker current price: {tickPrice} Current Balance: {balance}")
+    else: 
+        balance = balance - tickPrice*amt
+        print(f"Bought {ticker} for {tickPrice*amt}. You now have {balance}.")
+        data[account]['Money'] = balance
+    try:
+        data[account]['Stock'][ticker] += amt
+    except KeyError:
+        data[account]['Stock'][ticker] = 0
+        data[account]['Stock'][ticker] += amt
+    dumpData(data)
+    
+def checkStock(account):
+    data = getData()
+    for name, info in data.items():
+        if name == account:
+            print(f"For account: {name}")
+            for k, v in info.items():
+                if k == 'Money':
+                    print(f"Cash on hand: {v}")
+                if k == 'Stock': #use panda lib on this to display stock data?
+                    df = pd.DataFrame(v, index = ['# of Stock'])
+                    print('Current Stocks:'),
+                    print(df)
+                
 def sellStock():
     return 1
 def checkHistory():
     return 1
 
-def loadAccount(): #load user account or create new accounts
+def dumpData(data):
+   with open("data.json", "w") as f:
+      json.dump(data, f, indent=4)
+
+def checkPrice(*args): #show price for current ticker
+    ticker = input("Enter the ticker you want to check to the current price for: ")
+    ticInfo = yf.Ticker(ticker)
+    curValue = ticInfo.info["currentPrice"]
+    print(f"The current price of {ticker.capitalize} is {curValue}\n")
+
+def loadAccount(*args): #load user account or create new accounts
     def accountName(data, name):
-        for accName in data.items():
+        for accName in data:
             if accName == name:
-                return accountData(name, data['Money'], data['Stock'])
+                return name
         data[name] = {}
         while(True):
             try:
                 balance = int(input("How much money would you like to start this account with: "))
                 data[name]['Money'] = balance
+                data[name]['Stock'] = {}
                 break
             except ValueError:
                 print("Please enter a number.")
-        return accountData(name, data[name]['Money'])
+        return name
 
     #start here    
     data = getData()
@@ -66,11 +106,11 @@ def loadAccount(): #load user account or create new accounts
     else:
         name = input("You currently have no accounts. Enter an account name: ")
         acc = accountName(data, name)
-    print(f"Current account is {acc.name}")
+    print(f"Current account is {name}")
     dumpData(data)
     return acc
 
-def exit(): #quit program
+def exit(*args): #quit program
     return 1
 
 def menu(): #ui 
@@ -85,7 +125,10 @@ def menu(): #ui
         for i in range(0,len(commandList)): 
             print(i+1, commandList[i][0])
         function= int(input())-1
-        commandList[function][1]()
+        if function == 5:
+            account = commandList[function][1](account)
+        else:
+            commandList[function][1](account)
 
 menu()
 
